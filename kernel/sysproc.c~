@@ -7,12 +7,6 @@
 #include "sysfunc.h"
 
 int
-sys_clone(void)
-{
-  return clone(); //TODO: FILL!
-}
-
-int
 sys_fork(void)
 {
   return fork();

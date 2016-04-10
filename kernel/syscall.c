@@ -13,6 +13,12 @@
 // library system call function. The saved user %esp points
 // to a saved program counter, and then the first argument.
 
+int 
+clone(void(*fcn)(void*), void *arg, void*stack)
+{
+	//TODO
+}
+
 // Fetch the int at addr from process p.
 int
 fetchint(struct proc *p, uint addr, int *ip)
