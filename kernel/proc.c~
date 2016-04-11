@@ -159,7 +159,8 @@ fork(void)
   return pid;
 }
 
-int clone(void(*fcn)(void*), void *arg, void*stack)
+int clone(void(*fcn)(void*), void *arg, void*stack) 
+//stack is allocated but nothing in it. add stuff (look at exec.c)
 {
   int i, pid;
   struct proc *np;
@@ -168,10 +169,9 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
     return -1;
   
   np->pgdir = proc->pgdir;
-  np->kstack = stack; //is kstack = user stack?
   np->sz = proc->sz;
   np->parent = proc;
-  *np->tf = *proc->tf; //TODO: correct some of proc's tf regs
+  *np->tf = *proc->tf; 
   np->tf->eax = 0;
   
   //file descriptor jargon
@@ -188,7 +188,6 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   /* wait: check if it's a thread calling, dont clear mem (shares with caller)
   exit: remember to take into account threads
   library: look at user.h second part, copy ideas from where stuff is being done
-  
   */
 }
 
