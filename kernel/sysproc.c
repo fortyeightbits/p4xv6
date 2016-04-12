@@ -9,7 +9,8 @@
 int
 sys_clone(void)
 {
-  return clone(); //TODO: FILL!
+	//TODO: argptr thingamajig :)
+  return clone(void(*fcn)(void*), void *arg, void*stack); //TODO: FILL!
 }
 
 int

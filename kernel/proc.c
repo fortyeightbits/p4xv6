@@ -160,19 +160,21 @@ fork(void)
 }
 
 int clone(void(*fcn)(void*), void *arg, void*stack) 
+//TODO: 
 //stack is allocated but nothing in it. add stuff (look at exec.c)
-//
+//stack = user stack. Fresh off the malloc boat. We want to push arg and PC onto it.
 {
   int i, pid;
   struct proc *np;
 
-  if((np = allocproc()) == 0)
+  if((np = allocproc()) == 0){
     return -1;
+  }
   
   np->pgdir = proc->pgdir;
   np->sz = proc->sz;
   np->parent = proc;
-  *np->tf = *proc->tf; 
+  *np->tf = *proc->tf; //TODO: some registers in tf needs corrections I think
   np->tf->eax = 0;
   
   //file descriptor jargon
@@ -183,7 +185,7 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   
   pid = np->pid;
   np->state = RUNNABLE;
-  safestrcpy(np->name, proc->name, sizeof(proc->name));
+  safestrcpy(np->name, proc->name, sizeof(proc->name)); //what's this?
   return pid;
   
   /* wait: check if it's a thread calling, dont clear mem (shares with caller)
