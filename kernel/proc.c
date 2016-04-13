@@ -166,6 +166,10 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
 {
   int i, pid;
   struct proc *np;
+  uint ustack[5]; // This contains the newly generated 'stack' for our function.
+
+  uint sp = PGROUNDDOWN((uint)stack + 4096); //just off the top of my head, will need to verify.
+  uint bp = sp;
 
   if((np = allocproc()) == 0){
     return -1;
@@ -177,6 +181,13 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   *np->tf = *proc->tf; //TODO: some registers in tf needs corrections I think
   np->tf->eax = 0;
   
+  // Pushing stuff onto ustack. This is NOT complete yet.
+  ustack[0] = 0xffffffff;  // fake return PC
+  ustack[1] = argc;  // ???
+  ustack[2] = sp - (argc+1)*4;  // argv pointer
+  ustack[3] = &arg;
+  copyout(np->pgdir, sp, ustack, /*uncertain*/);
+
   //file descriptor jargon
   for(i = 0; i < NOFILE; i++)
     if(proc->ofile[i])
@@ -186,6 +197,9 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   pid = np->pid;
   np->state = RUNNABLE;
   safestrcpy(np->name, proc->name, sizeof(proc->name)); //what's this?
+
+  proc->tf->eip = fcn;  // start running function
+  proc->tf->esp = bp;
   return pid;
   
   /* wait: check if it's a thread calling, dont clear mem (shares with caller)
