@@ -14,6 +14,13 @@ sys_clone(void)
 }
 
 int
+sys_join(void)
+{
+
+    return join(//TOODLEDOO);
+}
+
+int
 sys_fork(void)
 {
   return fork();

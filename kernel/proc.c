@@ -175,6 +175,10 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
     return -1;
   }
   
+  int threadcounter;
+  for(threadcounter = 0; (proc->threads[threadcounter]) == NULL; threadcounter++);
+  proc->threads[threadcounter] = np;
+
   np->pgdir = proc->pgdir;
   np->sz = proc->sz;
   np->parent = proc;
@@ -206,6 +210,15 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   exit: remember to take into account threads
   library: look at user.h second part, copy ideas from where stuff is being done
   */
+}
+
+int join(void **stack)
+{
+
+
+
+
+
 }
 
 
