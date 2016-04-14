@@ -160,9 +160,6 @@ fork(void)
 }
 
 int clone(void(*fcn)(void*), void *arg, void*stack) 
-//TODO: 
-//stack is allocated but nothing in it. add stuff (look at exec.c)
-//stack = user stack. Fresh off the malloc boat. We want to push arg and PC onto it.
 {
   int i, pid;
   struct proc *np;
@@ -183,7 +180,7 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   np->sz = proc->sz;
   np->isThread = 1; // yes I'm a thread
   np->parent = proc;
-  *np->tf = *proc->tf; //TODO: some registers in tf needs corrections I think
+  *np->tf = *proc->tf;
   np->tf->eax = 0;
   
   // Pushing stuff onto ustack. This is NOT complete yet.
@@ -208,7 +205,7 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   safestrcpy(np->name, proc->name, sizeof(proc->name)); //what's this?
   return pid;
   
-  /* wait: check if it's a thread calling, dont clear mem (shares with caller)
+  /* 
   exit: remember to take into account threads
   library: look at user.h second part, copy ideas from where stuff is being done
   */

@@ -26,7 +26,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int clone(void(*)(void*), void*, void*);
-int join(void** , volatile uint pid);
+int join(void** , volatile uint pid); //buggle you can't just add stuff in :(
 
 // user library functions (ulib.c)
 int stat(char*, struct stat*);
