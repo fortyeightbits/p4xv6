@@ -168,8 +168,8 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   struct proc *np;
   uint ustack[5]; // This contains the newly generated 'stack' for our function.
 
-  uint sp = PGROUNDDOWN((uint)stack + 4096); //just off the top of my head, will need to verify.
-  uint bp = sp;
+  uint sp = (uint)stack + 1023; //just off the top of my head, will need to verify.
+  uint bp = sp; //set base pointer = stack pointer
 
   if((np = allocproc()) == 0){
     return -1;
@@ -183,10 +183,10 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   
   // Pushing stuff onto ustack. This is NOT complete yet.
   ustack[0] = 0xffffffff;  // fake return PC
-  ustack[1] = argc;  // ???
-  ustack[2] = sp - (argc+1)*4;  // argv pointer
-  ustack[3] = &arg;
-  copyout(np->pgdir, sp, ustack, /*uncertain*/);
+  ustack[1] = &arg;
+
+  sp -= 8;
+  copyout(np->pgdir, sp, ustack, 8);
 
   //file descriptor jargon
   for(i = 0; i < NOFILE; i++)
@@ -195,11 +195,11 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   np->cwd = idup(proc->cwd);
   
   pid = np->pid;
+  np->tf->eip = fcn;  // start running function
+  np->tf->ebp = bp;
+  np->tf->esp = sp;
   np->state = RUNNABLE;
   safestrcpy(np->name, proc->name, sizeof(proc->name)); //what's this?
-
-  proc->tf->eip = fcn;  // start running function
-  proc->tf->esp = bp;
   return pid;
   
   /* wait: check if it's a thread calling, dont clear mem (shares with caller)
