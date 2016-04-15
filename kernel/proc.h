@@ -74,8 +74,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  struct proc* threads[100];          //only used for threads
-  int isThread;                 // flag to mark if it's a thread
+  struct proc* threads[100];   // only used for threads
+  void* userStack;             // points to the 4096-byte page that stores the stack
+  int isThread;                // flag to mark if it's a thread
 };
 
 // Process memory is laid out contiguously, low addresses first:

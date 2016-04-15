@@ -13,7 +13,7 @@ sys_clone(void)
 	void* p1, p2;
 	void(*)(void*) p0;
 	
-	if(argptr(0, &p0, ) < 0 || argptr(2, &p2, )  < 0 || argptr(1, &p1, ) < 0) //what's the third arg?
+    if(argptr(0, &p0, 1) < 0 || argptr(2, &p2, 1)  < 0 || argptr(1, &p1, 1) < 0) //what's the third arg?
 		return -1;
 	return clone(p0, p1, p2);
 }
@@ -22,7 +22,7 @@ int
 sys_join(void)
 {
 	void** p;
-	if (argptr(0, &p, ) < 0) //third arg?
+    if (argptr(0, &p, 1) < 0) //third arg?
 		return -1;
     return join(p);
 }

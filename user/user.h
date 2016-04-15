@@ -2,6 +2,15 @@
 #define _USER_H_
 
 struct stat;
+// Mutual exclusion lock.
+typedef struct lock {
+  uint locked;       // Is the lock held?
+  // For debugging:
+  char *name;        // Name of lock.
+  struct cpu *cpu;   // The cpu holding the lock.
+  uint pcs[10];      // The call stack (an array of program counters)
+                     // that locked the lock.
+}lock_t;
 
 // system calls
 int fork(void);
@@ -26,7 +35,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int clone(void(*)(void*), void*, void*);
-int join(void** , volatile uint pid); //buggle you can't just add stuff in :(
+int join(void**);
 
 // user library functions (ulib.c)
 int stat(char*, struct stat*);

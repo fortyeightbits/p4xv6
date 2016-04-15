@@ -163,10 +163,11 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
 {
   int i, pid;
   struct proc *np;
-  uint ustack[5]; // This contains the newly generated 'stack' for our function.
+  uint ustack[2]; // This contains the newly generated 'stack' for our function.
 
   uint sp = (uint)stack + 1023; //just off the top of my head, will need to verify.
-  uint bp = sp; //set base pointer = stack pointer
+  uint bp = sp; //set base pointer = stack pointer  
+  np->userStack = stack;
 
   if((np = allocproc()) == 0){
     return -1;
@@ -175,7 +176,6 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   int threadcounter;
   for(threadcounter = 0; (proc->threads[threadcounter]) == NULL; threadcounter++);
   proc->threads[threadcounter] = np;
-
   np->pgdir = proc->pgdir;
   np->sz = proc->sz;
   np->isThread = 1; // yes I'm a thread
@@ -212,29 +212,31 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
 }
 
 // Join will still need to attain ptable lock and go to proc in question. Need to review with buggle.
-int join(void **stack, volatile uint pid)
+int join(void **stack)
 {
-    struct proc *p = ptable.proc[pid]; // Directly goes to the proc in question, no hassle of searching
-
     acquire(&ptable.lock);
     for(;;)
     {
-        if(p->state == ZOMBIE){
-          // Found one.
-          pid = p->pid;
-          kfree(p->kstack);
-          p->kstack = 0;
-          freevm(p->pgdir);
-          p->state = UNUSED;
-          p->pid = 0;
-          p->parent = 0;
-          p->name[0] = 0;
-          p->killed = 0;
-          release(&ptable.lock);
-          return pid;
+        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+            if(p->isThread == 0)
+                continue;
+            if(p->parent != proc)
+                continue;
+            if(p->state == ZOMBIE){
+              // Found one.
+              pid = p->pid;
+              kfree(p->kstack);
+              p->kstack = 0;
+              p->state = UNUSED;
+              p->pid = 0;
+              p->parent = 0;
+              p->name[0] = 0;
+              p->killed = 0;
+              release(&ptable.lock);
+              return pid;
+            }
         }
-
-        sleep(proc, &ptable.lock);  //DOC: wait-sleep
+    sleep(proc, &ptable.lock);  //DOC: wait-sleep
     }
 }
 
