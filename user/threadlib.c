@@ -7,13 +7,15 @@
 
 void thread_create(void (*start_routine)(void*), void *arg)
 {
-
-
+	void* newstack = malloc(4096);
+	int pid = clone(start_routine, arg, newstack);
 }
 
-void thread_join ()
+void thread_join()
 {
-	
+	void** tempstack;
+	int pid = join(tempstack);
+	free(&tempstack);
 }
 
 void lock_init(lock_t * padlock)
@@ -25,7 +27,7 @@ void lock_init(lock_t * padlock)
 void lock_acquire(lock_t * padlock)
 {
     pushcli(); // disable interrupts to avoid deadlock.
-    if(holding(lk))
+    if(holding(padlock))
       panic("acquire");
 
     // The xchg is atomic.
@@ -56,7 +58,7 @@ void lock_release(lock_t * padlock)
     // after a store. So lock->locked = 0 would work here.
     // The xchg being asm volatile ensures gcc emits it after
     // the above assignments (and after the critical section).
-    xchg(&lk->locked, 0);
+    xchg(&padlock->locked, 0);
 
     popcli();
 }

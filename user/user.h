@@ -51,5 +51,12 @@ void* malloc(uint);
 void free(void*);
 int atoi(const char*);
 
+// thread library functions
+int thread_create(void (*start_routine)(void*), void *);
+int thread_join(void);
+int lock_acquire(lock_t*);
+int lock_release(lock_t *);
+int holding(lock_t *);
+
 #endif // _USER_H_
 

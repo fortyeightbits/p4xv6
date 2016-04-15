@@ -9,22 +9,28 @@
 int
 sys_clone(void)
 {
-	int n;
-	void* p1, p2;
-	void(*)(void*) p0;
+	char* p1;
+	char* p2;
+	//void(*fcn)(void*);
+	char* p0;
 	
-    if(argptr(0, &p0, 1) < 0 || argptr(2, &p2, 1)  < 0 || argptr(1, &p1, 1) < 0) //what's the third arg?
+    if(argptr(0, &p0, 1) < 0 || argptr(2, &p2, 1)  < 0 || argptr(1, &p1, 1) < 0) 
 		return -1;
-	return clone(p0, p1, p2);
+	
+	/*p1 = (void*)p1;
+	p2 = (void*)p2;
+	p0 = (void (*)(void *))p0;*/
+	return clone((void (*)(void *))p0, (void*)p1, (void*)p2);
 }
 
 int
 sys_join(void)
 {
-	void** p;
-    if (argptr(0, &p, 1) < 0) //third arg?
+	char* p1;
+    if (argptr(0, &p1, 1) < 0) 
 		return -1;
-    return join(p);
+	
+    return join((void**)p1);
 }
 
 int

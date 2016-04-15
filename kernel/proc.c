@@ -167,11 +167,12 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
 
   uint sp = (uint)stack + 1023; //just off the top of my head, will need to verify.
   uint bp = sp; //set base pointer = stack pointer  
-  np->userStack = stack;
 
   if((np = allocproc()) == 0){
     return -1;
   }
+  
+    np->userStack = stack;
   
   int threadcounter;
   for(threadcounter = 0; (proc->threads[threadcounter]) == NULL; threadcounter++);
@@ -185,7 +186,7 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   
   // Pushing stuff onto ustack. This is NOT complete yet.
   ustack[0] = 0xffffffff;  // fake return PC
-  ustack[1] = &arg;
+  ustack[1] = (uint)(&arg);
 
   sp -= 8;
   copyout(np->pgdir, sp, ustack, 8);
@@ -198,7 +199,7 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   
   pid = np->pid;
   // trapframe stuff.
-  np->tf->eip = fcn;  // start running function
+  np->tf->eip = (uint)(&fcn);  // start running function
   np->tf->ebp = bp;
   np->tf->esp = sp;
   np->state = RUNNABLE;
@@ -214,6 +215,10 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
 // Join will still need to attain ptable lock and go to proc in question. Need to review with buggle.
 int join(void **stack)
 {
+	
+	struct proc *p;
+	int pid;
+	
     acquire(&ptable.lock);
     for(;;)
     {
