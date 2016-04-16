@@ -14,7 +14,7 @@ sys_clone(void)
 	//void(*fcn)(void*);
 	char* p0;
 	
-    if(argptr(0, &p0, 1) < 0 || argptr(2, &p2, 1)  < 0 || argptr(1, &p1, 1) < 0) 
+    if(argptr(0, &p0, 4 < 0 || argptr(2, &p2, 4)  < 0 || argptr(1, &p1, 1) < 0)) 
 		return -1;
 	
 	/*p1 = (void*)p1;
