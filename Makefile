@@ -61,7 +61,7 @@ ifndef QEMU
 QEMU := $(shell if which qemu 1> /dev/null 2> /dev/null; \
 	then echo qemu; exit; \
 	else \
-	qemu=/u/c/s/cs537-2/ta/tools/qemu;  \
+	qemu=u/c/s/cs537-2/ta/tools/qemu;  \
 	if test -x $$qemu; then echo $$qemu; exit; fi; fi; \
 	echo "***" 1>&2; \
 	echo "*** Error: Couldn't find a working QEMU executable." 1>&2; \
@@ -81,7 +81,7 @@ QEMUGDB := $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 
 # number of CPUs to emulate in QEMU
 ifndef CPUS
-CPUS := 2
+CPUS :=2 
 endif
 
 QEMUOPTS := -hdb fs.img xv6.img -smp $(CPUS)
