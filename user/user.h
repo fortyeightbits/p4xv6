@@ -6,9 +6,8 @@ struct stat;
 typedef struct lock {
   uint locked;       // Is the lock held?
   // For debugging:
-  char *name;        // Name of lock.
-  struct cpu *cpu;   // The cpu holding the lock.
-  uint pcs[10];      // The call stack (an array of program counters)
+  //struct cpu *cpu;   // The cpu holding the lock.
+  //uint pcs[10];      // The call stack (an array of program counters)
                      // that locked the lock.
 }lock_t;
 
@@ -54,8 +53,9 @@ int atoi(const char*);
 // thread library functions
 int thread_create(void (*start_routine)(void*), void *);
 int thread_join(void);
-int lock_acquire(lock_t*);
-int lock_release(lock_t *);
+void lock_init(lock_t *);
+void lock_acquire(lock_t*);
+void lock_release(lock_t *);
 int holding(lock_t *);
 
 #endif // _USER_H_

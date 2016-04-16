@@ -159,7 +159,8 @@ fork(void)
   return pid;
 }
 
-int clone(void(*fcn)(void*), void *arg, void*stack) 
+int 
+clone(void(*fcn)(void*), void *arg, void*stack) 
 {
   int pid;
   int i;
@@ -170,6 +171,11 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
 	  return -1; //not page aligned
   
   uint sp = (uint)stack + 4096; //just off the top of my head, will need to verify.
+  
+  //check if it exceeds size of address space
+  if (sp > proc->sz)
+	  return -1;
+  
   uint bp = sp; //set base pointer = stack pointer  
 
   if((np = allocproc()) == 0){
@@ -180,10 +186,9 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   
   int threadcounter;
   for(threadcounter = 0; (proc->threads[threadcounter]) != NULL; threadcounter++)
-  {
-      cprintf("threadcounter: %d\n", threadcounter);
-      cprintf("proc->threads[threadcounter]: %d\n", proc->threads[threadcounter]);
-  }
+	  ;
+      //cprintf("threadcounter: %d\n", threadcounter);
+      //cprintf("proc->threads[threadcounter]: %d\n", proc->threads[threadcounter]);
   proc->threads[threadcounter] = np;
   np->pgdir = proc->pgdir;
   np->sz = proc->sz;
@@ -194,7 +199,7 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   
   // Pushing stuff onto ustack. This is NOT complete yet.
   ustack[0] = 0xffffffff;  // fake return PC
-  ustack[1] = (uint)(&arg);
+  ustack[1] = (uint)(arg);
 
   sp -= 8;
   copyout(np->pgdir, sp, ustack, 8);
@@ -210,16 +215,11 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   np->tf->ebp = bp;
   np->tf->esp = sp;
   np->state = RUNNABLE;
-  //safestrcpy(np->name, proc->name, sizeof(proc->name)); //what's this?
+  safestrcpy(np->name, proc->name, sizeof(proc->name)); 
   return pid;
-  
-  /* 
-  exit: remember to take into account threads
-  library: look at user.h second part, copy ideas from where stuff is being done
-  */
 }
 
-// Join will still need to attain ptable lock and go to proc in question. Need to review with buggle.
+// location of the child's user stack is copied into the argument stack 
 int join(void **stack)
 {
 	
@@ -236,6 +236,7 @@ int join(void **stack)
                 continue;
             if(p->state == ZOMBIE){
               // Found one.
+			  *stack = p->userStack; //copied child's stack
               pid = p->pid;
               kfree(p->kstack);
               p->kstack = 0;
@@ -309,7 +310,7 @@ wait(void)
     // Scan through table looking for zombie children.
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->parent != proc)
+      if(p->parent != proc || p->isThread == 1)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
@@ -317,9 +318,7 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        if(p->isThread == 0){
-            freevm(p->pgdir);
-        }
+        freevm(p->pgdir);
         p->state = UNUSED;
         p->pid = 0;
         p->parent = 0;
