@@ -51,6 +51,7 @@ OBJDUMP := objdump
 ################################################################################
 # Emulator Options
 ################################################################################
+#qemu=/u/c/s/cs537-2/ta/tools/qemu; \
 
 # If the makefile can't find QEMU, specify its path here
 #QEMU :=
