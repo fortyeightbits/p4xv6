@@ -23,12 +23,15 @@ int
 main(int argc, char *argv[])
 {
    ppid = getpid();
+   int i = 26041995;
+   void* arg = &i;
    void *stack = malloc(PGSIZE*2);
    assert(stack != NULL);
    if((uint)stack % PGSIZE)
      stack = stack + (4096 - (uint)stack % PGSIZE);
-
-   int clone_pid = clone(worker, 0, stack);
+   printf(1, "worker: %d\n", worker);
+   printf(1, "stack: %d\n", stack);
+   int clone_pid = clone(worker, arg, stack);
    assert(clone_pid > 0);
    while(global != 5);
    printf(1, "TEST PASSED\n");

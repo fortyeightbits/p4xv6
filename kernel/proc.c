@@ -162,11 +162,11 @@ fork(void)
 int clone(void(*fcn)(void*), void *arg, void*stack) 
 {
   int pid;
-  //int i;
+  int i;
   struct proc *np;
   uint ustack[2]; // This contains the newly generated 'stack' for our function.
 
-  uint sp = (uint)stack + 1023; //just off the top of my head, will need to verify.
+  uint sp = (uint)stack + 4096; //just off the top of my head, will need to verify.
   uint bp = sp; //set base pointer = stack pointer  
 
   if((np = allocproc()) == 0){
@@ -195,16 +195,15 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
 
   sp -= 8;
   copyout(np->pgdir, sp, ustack, 8);
-
-//  //file descriptor jargon
-//  for(i = 0; i < NOFILE; i++)
-//    if(proc->ofile[i])
-//      np->ofile[i] = filedup(proc->ofile[i]);
-//  np->cwd = idup(proc->cwd);
+  //file descriptor jargon
+  for(i = 0; i < NOFILE; i++)
+    if(proc->ofile[i])
+      np->ofile[i] = filedup(proc->ofile[i]);
+  np->cwd = idup(proc->cwd);
   
   pid = np->pid;
   // trapframe stuff.
-  np->tf->eip = (uint)(&fcn);  // start running function
+  np->tf->eip = (uint)(fcn);  // start running function
   np->tf->ebp = bp;
   np->tf->esp = sp;
   np->state = RUNNABLE;
@@ -315,7 +314,9 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        freevm(p->pgdir);
+        if(p->isThread == 0){
+            freevm(p->pgdir);
+        }
         p->state = UNUSED;
         p->pid = 0;
         p->parent = 0;
