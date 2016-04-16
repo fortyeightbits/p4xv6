@@ -306,7 +306,7 @@ wait(void)
     // Scan through table looking for zombie children.
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->parent != proc)
+      if((p->parent != proc)||p->isThread == 1)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
@@ -314,9 +314,7 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        if(p->isThread == 0){
-            freevm(p->pgdir);
-        }
+        freevm(p->pgdir);
         p->state = UNUSED;
         p->pid = 0;
         p->parent = 0;
