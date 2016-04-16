@@ -161,7 +161,8 @@ fork(void)
 
 int clone(void(*fcn)(void*), void *arg, void*stack) 
 {
-  int i, pid;
+  int pid;
+  //int i;
   struct proc *np;
   uint ustack[2]; // This contains the newly generated 'stack' for our function.
 
@@ -175,7 +176,11 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
     np->userStack = stack;
   
   int threadcounter;
-  for(threadcounter = 0; (proc->threads[threadcounter]) == NULL; threadcounter++);
+  for(threadcounter = 0; (proc->threads[threadcounter]) != NULL; threadcounter++)
+  {
+      cprintf("threadcounter: %d\n", threadcounter);
+      cprintf("proc->threads[threadcounter]: %d\n", proc->threads[threadcounter]);
+  }
   proc->threads[threadcounter] = np;
   np->pgdir = proc->pgdir;
   np->sz = proc->sz;
@@ -191,11 +196,11 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   sp -= 8;
   copyout(np->pgdir, sp, ustack, 8);
 
-  //file descriptor jargon
-  for(i = 0; i < NOFILE; i++)
-    if(proc->ofile[i])
-      np->ofile[i] = filedup(proc->ofile[i]);
-  np->cwd = idup(proc->cwd);
+//  //file descriptor jargon
+//  for(i = 0; i < NOFILE; i++)
+//    if(proc->ofile[i])
+//      np->ofile[i] = filedup(proc->ofile[i]);
+//  np->cwd = idup(proc->cwd);
   
   pid = np->pid;
   // trapframe stuff.
@@ -203,7 +208,7 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   np->tf->ebp = bp;
   np->tf->esp = sp;
   np->state = RUNNABLE;
-  safestrcpy(np->name, proc->name, sizeof(proc->name)); //what's this?
+  //safestrcpy(np->name, proc->name, sizeof(proc->name)); //what's this?
   return pid;
   
   /* 
