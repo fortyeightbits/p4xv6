@@ -57,6 +57,7 @@ Makefile:150: user/tester.d: No such file or directory
 Makefile:150: user/usertests.d: No such file or directory
 Makefile:150: user/wc.d: No such file or directory
 Makefile:150: user/zombie.d: No such file or directory
+Makefile:150: user/clone.d: No such file or directory
 Makefile:150: user/ulib.d: No such file or directory
 Makefile:150: user/usys.d: No such file or directory
 Makefile:150: user/printf.d: No such file or directory
@@ -72,6 +73,8 @@ gcc  -I include -nostdinc -ggdb  -fno-pic -fno-builtin -fno-strict-aliasing -fno
 		-M -MG user/usys.S -MF user/usys.d -MT user/usys.d -MT user/usys.o
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
 		-M -MG user/ulib.c -MF user/ulib.d -MT user/ulib.d -MT user/ulib.o
+gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
+		-M -MG user/clone.c -MF user/clone.d -MT user/clone.d -MT user/clone.o
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
 		-M -MG user/zombie.c -MF user/zombie.d -MT user/zombie.d -MT user/zombie.o
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
@@ -226,15 +229,15 @@ ld  -m    elf_i386 -nostdlib --omagic \
 dd if=/dev/zero of=xv6.img count=10000
 10000+0 records in
 10000+0 records out
-5120000 bytes (5.1 MB) copied, 0.0107348 s, 477 MB/s
+5120000 bytes (5.1 MB) copied, 0.0106746 s, 480 MB/s
 dd if=kernel/bootblock of=xv6.img conv=notrunc
 1+0 records in
 1+0 records out
-512 bytes (512 B) copied, 6.9763e-05 s, 7.3 MB/s
+512 bytes (512 B) copied, 6.2684e-05 s, 8.2 MB/s
 dd if=kernel/kernel of=xv6.img seek=1 conv=notrunc
 256+1 records in
 256+1 records out
-131262 bytes (131 kB) copied, 0.000279635 s, 469 MB/s
+131270 bytes (131 kB) copied, 0.000255615 s, 514 MB/s
 gcc -c  -iquote include -Wall -Werror -ggdb  -o tools/mkfs.o tools/mkfs.c
 gcc  tools/mkfs.o -o tools/mkfs
 mkdir -p fs
@@ -292,28 +295,32 @@ cp user/bin/wc fs/wc
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o user/zombie.o user/zombie.c
 ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --output=user/bin/zombie user/zombie.o user/ulib.o user/usys.o user/printf.o user/umalloc.o
 cp user/bin/zombie fs/zombie
+gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o user/clone.o user/clone.c
+ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --output=user/bin/clone user/clone.o user/ulib.o user/usys.o user/printf.o user/umalloc.o
+cp user/bin/clone fs/clone
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
 kill
-stressfs
+sh
+rm
+ln
 init
+clone
+forktest
+wc
+tester
 grep
 mkdir
-rm
 cat
-README
-sh
-wc
-echo
-forktest
-ln
-zombie
-usertests
 ls
-tester
-balloc: first 421 blocks have been allocated
+echo
+usertests
+zombie
+README
+stressfs
+balloc: first 443 blocks have been allocated
 balloc: write bitmap block at sector 28
-rm user/bin/stressfs user/bin/grep user/bin/tester user/bin/kill user/bin/cat user/bin/mkdir user/bin/init user/bin/rm user/bin/echo user/bin/ls user/bin/ln user/bin/usertests user/bin/sh user/bin/wc user/bin/zombie
+rm user/bin/stressfs user/bin/grep user/bin/tester user/bin/kill user/bin/cat user/bin/mkdir user/bin/init user/bin/rm user/bin/echo user/bin/ls user/bin/ln user/bin/usertests user/bin/sh user/bin/wc user/bin/zombie user/bin/clone
 
 
 test build PASSED
@@ -338,23 +345,24 @@ cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
 kill
-stressfs
+sh
+rm
+ln
 init
+clone
+forktest
+wc
+tester
 grep
 mkdir
-rm
 cat
-README
-sh
-wc
-echo
-forktest
-ln
-zombie
-usertests
 ls
-tester
-balloc: first 423 blocks have been allocated
+echo
+usertests
+zombie
+README
+stressfs
+balloc: first 445 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox 
@@ -368,12 +376,70 @@ cpu0: starting
 init: starting sh
 $ tester
 tester
-pid 4 tester: trap 14 err 5 on cpu 0 eip 0xfe3f00 addr 0xfe3f00--kill proc
+TEST PASSED
+zombie!
 
 
-test clone FAILED (0 of 9)
+test clone PASSED (9 of 9)
  (clone and verify that address space is shared)
- Timelimit (10.0s) exceeded
 
-Skipped 14 tests.
+starting badclone
+
+**********************************************************************
+
+Test badclone
+clone with bad stack argument
+
+**********************************************************************
+Running xv6 user progam /u/c/s/cs537-1/ta/tests/4b/tests/badclone.c
+Trying to build project using make
+make
+gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
+		-M -MG user/tester.c -MF user/tester.d -MT user/tester.d -MT user/tester.o
+gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o user/tester.o user/tester.c
+ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --output=user/bin/tester user/tester.o user/ulib.o user/usys.o user/printf.o user/umalloc.o
+cp user/bin/tester fs/tester
+./tools/mkfs fs.img fs
+used 29 (bit 1 ninode 26) free 29 total 1024
+kill
+sh
+rm
+ln
+init
+clone
+forktest
+wc
+tester
+grep
+mkdir
+cat
+ls
+echo
+usertests
+zombie
+README
+stressfs
+balloc: first 445 blocks have been allocated
+balloc: write bitmap block at sector 28
+rm user/bin/tester
+make qemu-nox 
+Ctrl+a h for help
+/u/c/s/cs537-2/ta/tools/qemu -nographic -hdb fs.img xv6.img -smp 2
+Could not open option rom 'sgabios.bin': No such file or directory
+xv6...
+lapicinit: 1 0xfee00000
+cpu1: starting
+cpu0: starting
+init: starting sh
+$ tester
+tester
+user/tester.c: 40 assert failed (clone(worker, 0, stack) == -1)
+TEST FAILED
+
+
+test badclone FAILED (0 of 6)
+ (clone with bad stack argument)
+ tester failed
+
+Skipped 13 tests.
 To keep testing after failing a test, use flag '-c' or '--continue'

@@ -166,6 +166,9 @@ int clone(void(*fcn)(void*), void *arg, void*stack)
   struct proc *np;
   uint ustack[2]; // This contains the newly generated 'stack' for our function.
 
+  if((uint)stack % PGSIZE != 0)
+	  return -1; //not page aligned
+  
   uint sp = (uint)stack + 4096; //just off the top of my head, will need to verify.
   uint bp = sp; //set base pointer = stack pointer  
 
@@ -306,7 +309,7 @@ wait(void)
     // Scan through table looking for zombie children.
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if((p->parent != proc)||p->isThread == 1)
+      if(p->parent != proc)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
@@ -314,7 +317,9 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        freevm(p->pgdir);
+        if(p->isThread == 0){
+            freevm(p->pgdir);
+        }
         p->state = UNUSED;
         p->pid = 0;
         p->parent = 0;
