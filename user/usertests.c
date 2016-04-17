@@ -1,4 +1,4 @@
-/* test lock correctness */
+/* join argument checking */
 #include "types.h"
 #include "user.h"
 
@@ -8,11 +8,7 @@
 #define PGSIZE (4096)
 
 int ppid;
-int global = 0;
-lock_t lock;
-int num_threads = 30;
-int loops = 1000;
-
+int global = 1;
 
 #define assert(x) if (x) {} else { \
    printf(1, "%s: %d ", __FILE__, __LINE__); \
@@ -29,21 +25,26 @@ main(int argc, char *argv[])
 {
    ppid = getpid();
 
-   lock_init(&lock);
+   void *stack = malloc(PGSIZE*2);
+   assert(stack != NULL);
+   if((uint)stack % PGSIZE)
+     stack = stack + (4096 - (uint)stack % PGSIZE);
 
-   int i;
-   for (i = 0; i < num_threads; i++) {
-      int thread_pid = thread_create(worker, 0);
-	  printf(1, "Thread %d has been created!\n", i);
-      assert(thread_pid > 0);
-   }
+   int arg = 42;
+   int clone_pid = clone(worker, &arg, stack);
+   assert(clone_pid > 0);
 
-   for (i = 0; i < num_threads; i++) {
-      int join_pid = thread_join();
-      assert(join_pid > 0);
-   }
-
-   assert(global == num_threads * loops);
+   printf(1, "helloo\n");
+   sbrk(PGSIZE);
+      printf(1, "booyah\n");
+   void **join_stack = (void**) ((uint)sbrk(0) - 4);
+      printf(1, "nyaaam\n");
+   assert(join((void**)((uint)join_stack + 2)) == -1); //trap here
+      printf(1, "wheeee\n");
+   assert(join(join_stack) == clone_pid);
+      printf(1, "meoww\n");
+   assert(stack == *join_stack);
+   assert(global == 2);
 
    printf(1, "TEST PASSED\n");
    exit();
@@ -51,14 +52,10 @@ main(int argc, char *argv[])
 
 void
 worker(void *arg_ptr) {
-   int i, j, tmp;
-   for (i = 0; i < loops; i++) {
-      lock_acquire(&lock);
-      tmp = global;
-      for(j = 0; j < 50; j++); // take some time
-      global = tmp + 1;
-      lock_release(&lock);
-   }
+   int arg = *(int*)arg_ptr;
+   assert(arg == 42);
+   assert(global == 1);
+   global++;
    exit();
 }
 
