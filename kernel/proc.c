@@ -107,7 +107,7 @@ int
 growproc(int n)
 {
   uint sz;
-  
+  struct proc* p;
   sz = proc->sz;
   if(n > 0){
     if((sz = allocuvm(proc->pgdir, sz, sz + n)) == 0)
@@ -117,6 +117,17 @@ growproc(int n)
       return -1;
   }
   proc->sz = sz;
+  acquire(&ptable.lock);
+
+   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->isThread == 0)
+          continue;
+      if(p->parent != proc)
+          continue;
+      p->sz = sz;
+   }
+  release(&ptable.lock);
+
   switchuvm(proc);
   return 0;
 }
@@ -188,12 +199,13 @@ clone(void(*fcn)(void*), void *arg, void*stack)
   
     np->userStack = stack;
   
-  int threadcounter;
-  for(threadcounter = 0; (proc->threads[threadcounter]) != NULL; threadcounter++)
-	  ;
+//  int threadcounter;
+//  for(threadcounter = 0; (proc->threads[threadcounter]) != NULL; threadcounter++)
+//	  ;
       //cprintf("threadcounter: %d\n", threadcounter);
       //cprintf("proc->threads[threadcounter]: %d\n", proc->threads[threadcounter]);
-  proc->threads[threadcounter] = np;
+//  proc->threads[proc->currentThreadPos] = np;
+//  proc->currentThreadPos++;
   np->pgdir = proc->pgdir;
   np->sz = proc->sz;
   np->isThread = 1; // yes I'm a thread
@@ -246,7 +258,7 @@ int join(void **stack)
             if(p->state == ZOMBIE){
               // Found one.
 			  *stack = p->userStack; //copied child's stack
-              pid = p->pid;
+              pid = p->pid;             
               kfree(p->kstack);
               p->kstack = 0;
               p->state = UNUSED;
