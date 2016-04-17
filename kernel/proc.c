@@ -230,11 +230,12 @@ int join(void **stack)
 	struct proc *p;
 	int pid;
 	
-	/*
-	  if ((uint)*stack > proc->sz){
-	  cprintf("join error stack > sz\n");
-	  return -1;
-	}*/
+    cprintf("proc->sz: %d\n", proc->sz);
+
+    if ((uint)stack%4){
+      cprintf("join error stack > sz\n");
+      return -1;
+    }
 	
     acquire(&ptable.lock);
     for(;;)

@@ -39,6 +39,7 @@ main(int argc, char *argv[])
       printf(1, "booyah\n");
    void **join_stack = (void**) ((uint)sbrk(0) - 4);
       printf(1, "nyaaam\n");
+	  printf(1, "joinstackptr: %d\n", join_stack);
    assert(join((void**)((uint)join_stack + 2)) == -1); //trap here
       printf(1, "wheeee\n");
    assert(join(join_stack) == clone_pid);
