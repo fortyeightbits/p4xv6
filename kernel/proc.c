@@ -229,22 +229,20 @@ int join(void **stack)
 	
 	struct proc *p;
 	int pid;
-	
-    cprintf("proc->sz: %d\n", proc->sz);
 
-    if ((uint)stack%4){
-      cprintf("join error stack > sz\n");
+    if ((uint)stack%4)
       return -1;
-    }
-	
+
     acquire(&ptable.lock);
     for(;;)
     {
+		int flag = 0;
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
             if(p->isThread == 0)
                 continue;
             if(p->parent != proc)
                 continue;
+			flag = 1;
             if(p->state == ZOMBIE){
               // Found one.
 			  *stack = p->userStack; //copied child's stack
@@ -259,8 +257,15 @@ int join(void **stack)
               release(&ptable.lock);
               return pid;
             }
+			
         }
+		if (!flag){
+			release(&ptable.lock);
+			return -1;
+		}
     sleep(proc, &ptable.lock);  //DOC: wait-sleep
+	//release(&ptable.lock);
+	//return -1;
     }
 }
 

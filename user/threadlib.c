@@ -17,9 +17,9 @@ int thread_create(void (*start_routine)(void*), void *arg)
 
 int thread_join()
 {
-	void** tempstack;
-	int pid = join(tempstack);
-	free(&tempstack);
+	void* tempstack;
+	int pid = join(&tempstack);
+	free(tempstack);
 	return pid;
 }
 

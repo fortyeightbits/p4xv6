@@ -1,4 +1,4 @@
-/* join argument checking */
+/* check that address space size is updated in threads */
 #include "types.h"
 #include "user.h"
 
@@ -8,7 +8,11 @@
 #define PGSIZE (4096)
 
 int ppid;
-int global = 1;
+int global = 0;
+unsigned int size = 0;
+lock_t lock, lock2;
+int num_threads = 30;
+
 
 #define assert(x) if (x) {} else { \
    printf(1, "%s: %d ", __FILE__, __LINE__); \
@@ -25,27 +29,45 @@ main(int argc, char *argv[])
 {
    ppid = getpid();
 
-   void *stack = malloc(PGSIZE*2);
-   assert(stack != NULL);
-   if((uint)stack % PGSIZE)
-     stack = stack + (4096 - (uint)stack % PGSIZE);
+   int arg = 101;
+   void *arg_ptr = &arg;
 
-   int arg = 42;
-   int clone_pid = clone(worker, &arg, stack);
-   assert(clone_pid > 0);
+   lock_init(&lock);
+   lock_init(&lock2);
+   lock_acquire(&lock);
+   lock_acquire(&lock2);
 
-   printf(1, "helloo\n");
-   sbrk(PGSIZE);
-      printf(1, "booyah\n");
-   void **join_stack = (void**) ((uint)sbrk(0) - 4);
-      printf(1, "nyaaam\n");
-	  printf(1, "joinstackptr: %d\n", join_stack);
-   assert(join((void**)((uint)join_stack + 2)) == -1); //trap here
-      printf(1, "wheeee\n");
-   assert(join(join_stack) == clone_pid);
-      printf(1, "meoww\n");
-   assert(stack == *join_stack);
-   assert(global == 2);
+   int i;
+   for (i = 0; i < num_threads; i++) {
+      int thread_pid = thread_create(worker, arg_ptr);
+      assert(thread_pid > 0);
+   }
+
+   size = (unsigned int)sbrk(0);
+
+   while (global < num_threads) {
+      lock_release(&lock);
+      sleep(100);
+      lock_acquire(&lock);
+   }
+
+   global = 0;
+   sbrk(10000);
+   size = (unsigned int)sbrk(0);
+   lock_release(&lock);
+
+   while (global < num_threads) {
+      lock_release(&lock2);
+      sleep(100);
+      lock_acquire(&lock2);
+   }
+   lock_release(&lock2);
+
+
+   for (i = 0; i < num_threads; i++) {
+      int join_pid = thread_join();
+      assert(join_pid > 0);
+   }
 
    printf(1, "TEST PASSED\n");
    exit();
@@ -53,10 +75,16 @@ main(int argc, char *argv[])
 
 void
 worker(void *arg_ptr) {
-   int arg = *(int*)arg_ptr;
-   assert(arg == 42);
-   assert(global == 1);
+   lock_acquire(&lock);
+   assert((unsigned int)sbrk(0) == size); //fail here
    global++;
+   lock_release(&lock);
+
+   lock_acquire(&lock2);
+   assert((unsigned int)sbrk(0) == size);
+   global++;
+   lock_release(&lock2);
+
    exit();
 }
 
