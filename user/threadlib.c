@@ -7,7 +7,10 @@
 
 int thread_create(void (*start_routine)(void*), void *arg)
 {
-	void* newstack = malloc(4096);
+    void* newstack = malloc(2*PGSIZE);
+    if((uint)newstack % PGSIZE)
+        newstack = newstack + (4096 - (uint)newstack % PGSIZE);
+
 	int pid = clone(start_routine, arg, newstack);
 	return pid;
 }

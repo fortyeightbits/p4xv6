@@ -34,6 +34,7 @@ main(int argc, char *argv[])
    int i;
    for (i = 0; i < num_threads; i++) {
       int thread_pid = thread_create(worker, 0);
+	  printf(1, "Thread %d has been created!\n", i);
       assert(thread_pid > 0);
    }
 
