@@ -167,14 +167,18 @@ clone(void(*fcn)(void*), void *arg, void*stack)
   struct proc *np;
   uint ustack[2]; // This contains the newly generated 'stack' for our function.
 
-  if((uint)stack % PGSIZE != 0)
+  if((uint)stack % 4096 != 0){
+	  cprintf("not page aligned: %d\n", (uint)stack);
 	  return -1; //not page aligned
+  }
   
   uint sp = (uint)stack + 4096; //just off the top of my head, will need to verify.
   
-  //check if it exceeds size of address space
-  if (sp > proc->sz)
+  //check if it exceeds size of address space. sp or stack?
+  if (sp > proc->sz){
+	  cprintf("sp > sz\n");
 	  return -1;
+  }
   
   uint bp = sp; //set base pointer = stack pointer  
 
@@ -198,7 +202,7 @@ clone(void(*fcn)(void*), void *arg, void*stack)
   np->tf->eax = 0;
   
   // Pushing stuff onto ustack. This is NOT complete yet.
-  ustack[0] = 0xffffffff;  // fake return PC
+  ustack[0] = 0xffffffff;  // fake return PC. I think this is here so that if there is no exit() done by user, it traps.
   ustack[1] = (uint)(arg);
 
   sp -= 8;

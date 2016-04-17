@@ -1,4 +1,4 @@
-/* join, not wait, should handle threads */
+/* memory leaks from thread library? */
 #include "types.h"
 #include "user.h"
 
@@ -8,7 +8,7 @@
 #define PGSIZE (4096)
 
 int ppid;
-int global = 1;
+volatile int global;
 
 #define assert(x) if (x) {} else { \
    printf(1, "%s: %d ", __FILE__, __LINE__); \
@@ -25,23 +25,17 @@ main(int argc, char *argv[])
 {
    ppid = getpid();
 
-   void *stack = malloc(PGSIZE*2);
-   assert(stack != NULL);
-   if((uint)stack % PGSIZE)
-     stack = stack + (4096 - (uint)stack % PGSIZE);
-
-   int arg = 42;
-   int clone_pid = clone(worker, &arg, stack);
-   assert(clone_pid > 0);
-
-   sleep(250);
-   assert(wait() == -1);
-
-   void *join_stack;
-   int join_pid = join(&join_stack);
-   assert(join_pid == clone_pid);
-   assert(stack == join_stack);
-   assert(global == 2);
+   int i, thread_pid, join_pid;
+   for(i = 0; i < 2000; i++) {
+      global = 1;
+      thread_pid = thread_create(worker, 0);
+	  printf(1, "%d: thread_pid - %d\n", i, thread_pid);
+      assert(thread_pid > 0); //dies here
+      join_pid = thread_join();
+      assert(join_pid == thread_pid);
+      assert(global == 5);
+      assert((uint)sbrk(0) < (150 * 4096) && "shouldn't even come close");
+   }
 
    printf(1, "TEST PASSED\n");
    exit();
@@ -49,11 +43,8 @@ main(int argc, char *argv[])
 
 void
 worker(void *arg_ptr) {
-   int arg = *(int*)arg_ptr;
-   assert(arg == 42);
    assert(global == 1);
-   global++;
-      printf(1, "global inced: %d\n", global);
+   global+=4;
    exit();
 }
 
